@@ -179,7 +179,6 @@ def test_classlabel_shape():
 
 test_image_inputs = [
     "uint32",
-    "int16",
     "float32",
     "float64",
     "int8",
