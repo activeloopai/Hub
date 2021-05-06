@@ -12,6 +12,7 @@ from hub.compute.ray import empty_remote
 
 import numpy as np
 
+
 dynamic_schema = {
     "image": Tensor(shape=(None, None, None), dtype="int32", max_shape=(32, 32, 3)),
     "label": Text((None,), "int64", (20,)),
