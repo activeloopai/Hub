@@ -68,6 +68,7 @@ from hub.exceptions import (
     ShapeLengthException,
     VersioningNotSupportedException,
     WrongUsernameException,
+    AuthenticationException,
     InvalidVersionInfoException,
     SchemaMismatchException,
 )
@@ -244,8 +245,10 @@ class Dataset:
             except Exception as e:
                 try:
                     self.close()
-                except Exception:
-                    pass
+
+                except:
+
+                    raise AuthenticationException
                 self._fs.rm(self._path, recursive=True)
                 logger.error("Deleting the dataset " + traceback.format_exc() + str(e))
                 raise
