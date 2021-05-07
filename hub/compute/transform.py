@@ -17,14 +17,13 @@ import collections.abc as abc
 from hub.api.datasetview import DatasetView
 from pathos.pools import ProcessPool, ThreadPool
 from hub.schema.sequence import Sequence
-from hub.schema.features import featurify
+from hub.schema.features import featurify, SchemaDict
 import os
 from hub.defaults import OBJECT_CHUNK
 
 
 def get_sample_size(schema, workers):
     """Given Schema, decides how many samples to take at once and returns it"""
-    schema = featurify(schema)
     samples = 10000
     for feature in schema._flatten():
         shp = list(feature.max_shape)
@@ -68,7 +67,7 @@ class Transform:
             additional arguments that will be passed to func as static argument for all samples
         """
         self._func = func
-        self.schema = schema
+        self.schema = featurify(schema)
         self._ds = ds
         self.kwargs = kwargs
         self.workers = workers
@@ -145,6 +144,7 @@ class Transform:
         d: dict
         """
         items = []
+        d = d.dict_ if isinstance(d, SchemaDict) else d
         for k, v in d.items():
             new_key = parent_key + "/" + k if parent_key else k
             if isinstance(v, MutableMapping) and not isinstance(
@@ -163,7 +163,7 @@ class Transform:
         Helper function to get the dtype from the path
         """
         path = path.split("/")
-        cur_type = schema
+        cur_type = schema.dict_
         for subpath in path[:-1]:
             cur_type = cur_type[subpath]
             cur_type = cur_type.dict_
@@ -341,10 +341,7 @@ class Transform:
             return result
 
         ds_in = list(ds_in)
-        results = self.map(
-            _func_argd,
-            ds_in,
-        )
+        results = self.map(_func_argd, ds_in,)
         results = self._unwrap(results)
         results = self.map(lambda x: self._flatten_dict(x, schema=self.schema), results)
         results = list(results)
@@ -363,9 +360,7 @@ class Transform:
         ds_out.append_shape(additional)
 
         self.upload(
-            results,
-            ds_out[offset : offset + n_results],
-            token=token,
+            results, ds_out[offset : offset + n_results], token=token,
         )
 
         return n_results
